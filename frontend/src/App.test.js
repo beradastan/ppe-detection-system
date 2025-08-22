@@ -14,7 +14,8 @@ describe('App Component', () => {
 
   test('shows connection status', () => {
     render(<App />);
-    const statusElement = screen.getByText(/Bağlantı durumu/i);
+    // Bağlantı durumu üst barda gösteriliyor - "Sistem Aktif" veya "Bağlantı Hatası" metinlerini ara
+    const statusElement = screen.getByText(/(Sistem Aktif|Bağlantı Hatası)/i);
     expect(statusElement).toBeInTheDocument();
   });
 });
