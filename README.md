@@ -132,7 +132,7 @@ cd ../mobile
 ./gradlew test
 ```
 
-## 🤝 Katkıda Bulunma
+##  Katkıda Bulunma
 
 1. Fork'layın (https://github.com/yourusername/ppe-detection-system/fork)
 2. Özellik dalınızı oluşturun (`git checkout -b feature/AmazingFeature`)
@@ -144,13 +144,4 @@ cd ../mobile
 
 Bu proje MIT lisansı altında lisanslanmıştır - detaylar için [LICENSE](LICENSE) dosyasına bakınız.
 
-## İletişim
 
-Eğer herhangi bir sorunuz veya öneriniz varsa lütfen bir issue açın.
-
----
-
-<div align="center">
-  <p>Geliştirilmiştir <a href="https://github.com/yourusername">Sizin Adınız</a> tarafından</p>
-  <p>Projeyi beğendiyseniz yıldızlamayı unutmayın!</p>
-</div>
