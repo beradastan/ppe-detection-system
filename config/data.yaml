@@ -1,0 +1,7 @@
+path: /Users/berat/Desktop/DATASET/ppe.v1i.yolov8
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 8
+names: ['Dust Mask', 'Eye Wear', 'Shield', 'boots', 'glove', 'helmet', 'person', 'vest']

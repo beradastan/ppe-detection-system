@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamera Test - MacBook Pro M4 Pro</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .camera-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 10px;
+            background: #000;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+        .info { background: rgba(33, 150, 243, 0.3); }
+        .camera-list {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📹 MacBook Pro M4 Pro Kamera Testi</h1>
+        
+        <div class="camera-section">
+            <h3>🔍 Kamera Durumu</h3>
+            <div id="status" class="status info">Kamera testi başlatılıyor...</div>
+            
+            <button onclick="checkPermissions()">🔐 İzinleri Kontrol Et</button>
+            <button onclick="listCameras()">📋 Kameraları Listele</button>
+            <button onclick="startCamera()">📹 Kamerayı Başlat</button>
+            <button onclick="stopCamera()" disabled id="stopBtn">⏹️ Kamerayı Durdur</button>
+        </div>
+
+        <div class="camera-section">
+            <h3>📷 Kamera Seçimi</h3>
+            <select id="cameraSelect" onchange="changeCamera()">
+                <option value="">Kamera seçin...</option>
+            </select>
+        </div>
+
+        <div class="camera-section">
+            <h3>🎥 Kamera Görüntüsü</h3>
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+
+        <div class="camera-section">
+            <h3>📊 Kamera Bilgileri</h3>
+            <div id="cameraInfo" class="status info">Kamera bilgileri burada görünecek...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentStream = null;
+        let availableCameras = [];
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('Sistem hazır', 'info');
+            checkPermissions();
+        });
+
+        // İzinleri kontrol et
+        async function checkPermissions() {
+            try {
+                updateStatus('İzinler kontrol ediliyor...', 'info');
+                
+                const result = await navigator.permissions.query({ name: 'camera' });
+                console.log('Kamera izin durumu:', result.state);
+                
+                if (result.state === 'granted') {
+                    updateStatus('✅ Kamera izni verildi', 'success');
+                    listCameras();
+                } else if (result.state === 'prompt') {
+                    updateStatus('⚠️ Kamera izni istenecek', 'info');
+                } else if (result.state === 'denied') {
+                    updateStatus('❌ Kamera izni reddedildi', 'error');
+                }
+                
+                return result.state;
+            } catch (err) {
+                console.error('İzin kontrolü hatası:', err);
+                updateStatus('❌ İzin kontrolü hatası: ' + err.message, 'error');
+                return 'unknown';
+            }
+        }
+
+        // Kameraları listele
+        async function listCameras() {
+            try {
+                updateStatus('Kamera listesi alınıyor...', 'info');
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                availableCameras = videoDevices;
+                console.log('Mevcut kameralar:', videoDevices);
+                
+                const select = document.getElementById('cameraSelect');
+                select.innerHTML = '<option value="">Kamera seçin...</option>';
+                
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Kamera ${index + 1}`;
+                    select.appendChild(option);
+                });
+                
+                updateStatus(`✅ ${videoDevices.length} kamera bulundu`, 'success');
+                
+                if (videoDevices.length > 0) {
+                    select.value = videoDevices[0].deviceId;
+                }
+                
+            } catch (err) {
+                console.error('Kamera listesi hatası:', err);
+                updateStatus('❌ Kamera listesi alınamadı: ' + err.message, 'error');
+            }
+        }
+
+        // Kamerayı başlat
+        async function startCamera() {
+            try {
+                updateStatus('Kamera başlatılıyor...', 'info');
+                
+                const selectedCamera = document.getElementById('cameraSelect').value;
+                
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 },
+                        facingMode: 'user',
+                        frameRate: { ideal: 30, min: 15 },
+                        deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+                        aspectRatio: { ideal: 16/9 }
+                    },
+                    audio: false
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                currentStream = stream;
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    updateStatus('✅ Kamera başlatıldı', 'success');
+                    document.getElementById('stopBtn').disabled = false;
+                    updateCameraInfo();
+                };
+                
+                video.onerror = (error) => {
+                    console.error('Video hatası:', error);
+                    updateStatus('❌ Video yükleme hatası', 'error');
+                };
+                
+            } catch (err) {
+                console.error('Kamera başlatma hatası:', err);
+                
+                let errorMessage = 'Kamera başlatma hatası';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = 'Kamera izni reddedildi';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage = 'Kamera bulunamadı';
+                } else if (err.name === 'NotReadableError') {
+                    errorMessage = 'Kamera başka uygulama tarafından kullanılıyor';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage = 'Kamera ayarları desteklenmiyor';
+                } else {
+                    errorMessage = err.message;
+                }
+                
+                updateStatus('❌ ' + errorMessage, 'error');
+            }
+        }
+
+        // Kamerayı durdur
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+                
+                const video = document.getElementById('video');
+                video.srcObject = null;
+                
+                updateStatus('⏹️ Kamera durduruldu', 'info');
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        // Kamera değiştir
+        function changeCamera() {
+            if (currentStream) {
+                stopCamera();
+                setTimeout(startCamera, 500);
+            }
+        }
+
+        // Kamera bilgilerini güncelle
+        function updateCameraInfo() {
+            const video = document.getElementById('video');
+            const info = document.getElementById('cameraInfo');
+            
+            if (video.videoWidth && video.videoHeight) {
+                const infoText = `
+                    📐 Çözünürlük: ${video.videoWidth}x${video.videoHeight}<br>
+                    🎬 FPS: ${video.framerate || 'Bilinmiyor'}<br>
+                    📱 Kamera: ${document.getElementById('cameraSelect').selectedOptions[0]?.text || 'Bilinmiyor'}
+                `;
+                info.innerHTML = infoText;
+            }
+        }
+
+        // Durum güncelle
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+    </script>
+</body>
+</html>

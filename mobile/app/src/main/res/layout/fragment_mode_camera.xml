@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="12dp">
+
+  <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="4">
+
+    <androidx.camera.view.PreviewView
+      android:id="@+id/preview"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
+    <com.company.ppe.ui.detection.DetectionOverlayView
+      android:id="@+id/overlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
+    <!-- Status pill ve message -->
+    <TextView
+      android:id="@+id/textStatusPill"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top|center_horizontal"
+      android:layout_marginTop="16dp"
+      android:background="#80000000"
+      android:padding="8dp"
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold"
+      android:visibility="gone"/>
+
+    <TextView
+      android:id="@+id/textStatusMessage"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top|center_horizontal"
+      android:layout_marginTop="8dp"
+      android:background="#80000000"
+      android:padding="8dp"
+      android:textColor="#FFFFFF"
+      android:textSize="12sp"
+      android:visibility="gone"/>
+
+    <!-- Otomatik çıkış bilgi mesajı -->
+    <TextView
+      android:id="@+id/textAutoExitMessage"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:background="#CC000000"
+      android:padding="16dp"
+      android:textColor="#FFFFFF"
+      android:textSize="16sp"
+      android:textStyle="bold"
+      android:visibility="gone"
+      android:text="Geçiş İzni Verilmiştir, Otomatik Çıkış Yapılıyor"/>
+
+    <TextView
+      android:id="@+id/textConn"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_margin="8dp"
+      android:background="#88000000"
+      android:paddingLeft="8dp"
+      android:paddingRight="8dp"
+      android:paddingTop="4dp"
+      android:paddingBottom="4dp"
+      android:textColor="#FFFFFF"
+      android:textSize="12sp"
+      android:text="Bağlantı: bilinmiyor"/>
+
+    <!-- Border overlay to show status color around preview -->
+    <View
+      android:id="@+id/borderOverlay"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:clickable="false"
+      android:focusable="false"
+      android:background="@android:color/transparent"/>
+
+  </FrameLayout>
+
+  <!-- Alt bar: ekipman durumları -->
+  <com.google.android.material.card.MaterialCardView
+    android:id="@+id/bottomBar"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:layout_marginTop="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:orientation="vertical">
+
+      <!-- Üst kısım: Eksik ekipmanlar (Kırmızı) -->
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="#FFEBEE"
+        android:padding="8dp">
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Eksik Ekipmanlar:"
+          android:textColor="#D32F2F"
+          android:textSize="12sp"
+          android:textStyle="bold"
+          android:layout_marginBottom="4dp"/>
+
+        <HorizontalScrollView
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:scrollbars="none">
+
+          <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipsMissingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="false"/>
+        </HorizontalScrollView>
+      </LinearLayout>
+
+      <!-- Alt kısım: Var olan ekipmanlar (Yeşil) -->
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="#E8F5E8"
+        android:padding="8dp">
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Var Olan Ekipmanlar:"
+          android:textColor="#388E3C"
+          android:textSize="12sp"
+          android:textStyle="bold"
+          android:layout_marginBottom="4dp"/>
+
+        <HorizontalScrollView
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:scrollbars="none">
+
+          <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipsExistingBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="false"/>
+        </HorizontalScrollView>
+      </LinearLayout>
+
+    </LinearLayout>
+  </com.google.android.material.card.MaterialCardView>
+
+  <ProgressBar
+    android:id="@+id/progress"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:visibility="gone"/>
+
+</LinearLayout>
+
+

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="12dp">
+
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnToggleCreate"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:text="Yeni Kullanıcı Ekle"
+    app:icon="@drawable/ic_add_24"
+    app:iconTint="#FFFFFF"
+    app:iconGravity="textStart"
+    app:iconPadding="8dp"
+    android:layout_marginBottom="8dp"/>
+
+  <!-- Create User Form -->
+  <androidx.cardview.widget.CardView
+    android:id="@+id/cardCreate"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:visibility="gone"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:padding="16dp">
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Yeni Kullanıcı"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:layout_marginBottom="12dp"/>
+
+      <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Kullanıcı adı"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="#BDBDBD"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+        <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/inputUsername"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"/>
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Şifre"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="#BDBDBD"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+        <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/inputPassword"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:inputType="textPassword"/>
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ad Soyad (opsiyonel)"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="#BDBDBD"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+        <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/inputFullName"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"/>
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rol"
+        android:layout_marginBottom="4dp"/>
+
+      <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Rol"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="#BDBDBD"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+        <Spinner
+        android:id="@+id/spinnerRole"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"/>
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Supervisor (worker için)"
+        android:layout_marginBottom="4dp"/>
+
+      <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Supervisor (worker için)"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="#BDBDBD"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+        <Spinner
+        android:id="@+id/spinnerSupervisor"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"/>
+      </com.google.android.material.textfield.TextInputLayout>
+
+      <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCreate"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Oluştur"
+        app:icon="@drawable/ic_add_24"
+        app:iconTint="#FFFFFF"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp"/>
+
+      <ProgressBar
+        android:id="@+id/progressCreate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"/>
+
+      <TextView
+        android:id="@+id/textError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#B00020"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"/>
+
+    </LinearLayout>
+  </androidx.cardview.widget.CardView>
+
+  <!-- Users List -->
+  <EditText
+    android:id="@+id/inputSearchUser"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Kullanıcı ara"
+    android:layout_marginBottom="8dp"/>
+
+  <androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/recyclerView"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"/>
+
+</LinearLayout>

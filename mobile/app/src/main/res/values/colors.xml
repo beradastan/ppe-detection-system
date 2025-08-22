@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- rgb(36,99,235) -> #2463EB -->
+    <color name="color_primary">#2463EB</color>
+    <!-- Darker variant for emphasized surfaces -->
+    <color name="color_primary_dark">#1D4ED8</color>
+    <!-- Light variant for icons on dark primary surfaces -->
+    <color name="color_primary_light">#93C5FD</color>
+    <color name="color_on_primary">#FFFFFF</color>
+    <color name="color_secondary">#1565C0</color>
+    <color name="color_background">#FFFFFF</color>
+    <color name="color_on_background">#111111</color>
+</resources>

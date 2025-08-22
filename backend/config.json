@@ -1,0 +1,41 @@
+{
+  "model": {
+    "path": "../runs/detect/train2/weights/best.pt",
+    "confidence_threshold": 0.5
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "cors_origins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000"
+    ]
+  },
+  "ppe_rules": {
+    "required_items": ["helmet", "vest", "boots"],
+    "optional_items": ["glove", "Dust Mask", "Eye Wear", "Shield"],
+    "class_names": {
+      "helmet": "Kask",
+      "vest": "Yelek", 
+      "boots": "Bot",
+      "glove": "Eldiven",
+      "Dust Mask": "Toz Maskesi",
+      "Eye Wear": "Güvenlik Gözlüğü",
+      "Shield": "Koruyucu Kalkan",
+      "person": "Kişi"
+    }
+  },
+  "camera": {
+    "fps": 2,
+    "width": 640,
+    "height": 480,
+    "jpeg_quality": 0.8
+  },
+  "messages": {
+    "full_compliance": "Tüm güvenlik ekipmanları mevcut. Geçiş onaylandı!",
+    "partial_compliance": "Eksik güvenlik ekipmanları mevcut. Lütfen ekipmanınızı kontrol edin. Geçiş onaylandı.",
+    "non_compliance": "Zorunlu ekipmanlar eksik. Geçiş reddedildi!",
+    "no_person": "Kişi algılanmadı",
+    "error": "Tespit sırasında hata oluştu"
+  }
+}

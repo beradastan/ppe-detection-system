@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  app:startDestination="@id/SplashFragment">
+
+  <fragment
+      android:id="@+id/SplashFragment"
+      android:name="com.company.ppe.ui.splash.SplashFragment"
+      android:label="Splash" />
+
+  <fragment
+    android:id="@+id/LoginFragment"
+    android:name="com.company.ppe.ui.login.LoginFragment"
+    android:label="Login">
+    <action
+      android:id="@+id/action_LoginFragment_to_ModeSelectFragment"
+      app:destination="@id/ModeSelectFragment"/>
+  </fragment>
+
+  <fragment
+    android:id="@+id/RegisterFragment"
+    android:name="com.company.ppe.ui.auth.RegisterFragment"
+    android:label="Register">
+    <action
+      android:id="@+id/action_RegisterFragment_to_ModeSelectFragment"
+      app:destination="@id/ModeSelectFragment"/>
+  </fragment>
+
+  
+  <fragment
+      android:id="@+id/DashboardFragment"
+      android:name="com.company.ppe.ui.main.DashboardFragment"
+      android:label="Dashboard">
+      <action
+        android:id="@+id/action_DashboardFragment_to_DetailsFragment"
+        app:destination="@id/DetailsFragment" />
+  </fragment>
+
+  <fragment
+      android:id="@+id/DetailsFragment"
+      android:name="com.company.ppe.ui.main.DetailsFragment"
+      android:label="Detay">
+      <argument
+        android:name="itemId"
+        app:argType="string" />
+  </fragment>
+
+  <fragment
+      android:id="@+id/ModeSelectFragment"
+      android:name="com.company.ppe.ui.detection.ModeSelectFragment"
+      android:label="Mod Seçimi" />
+
+  <fragment
+      android:id="@+id/ModeCameraFragment"
+      android:name="com.company.ppe.ui.detection.ModeCameraFragment"
+      android:label="Kamera" />
+
+  <fragment
+      android:id="@+id/ModeQrFragment"
+      android:name="com.company.ppe.ui.detection.ModeQrFragment"
+      android:label="QR" />
+
+  <fragment
+      android:id="@+id/AdminDashboardFragment"
+      android:name="com.company.ppe.ui.admin.AdminDashboardFragment"
+      android:label="Admin Panel" />
+
+  <fragment
+      android:id="@+id/SettingsFragment"
+      android:name="com.company.ppe.ui.settings.SettingsFragment"
+      android:label="Ayarlar" />
+
+</navigation>
+
+

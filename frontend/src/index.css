@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern Business Tasarım */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+}
+
+/* Business Cards - Keskin köşeler, minimal gölgeler */
+.business-card {
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.business-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+/* Video Container - Business Style */
+.video-container {
+  background: #ffffff;
+  border: 2px solid #e1e5e9;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Status Cards - Professional */
+.status-card {
+  border-left: 4px solid #3b82f6;
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: border-left-color 0.2s ease;
+}
+
+/* Equipment Detection Cards */
+.detected-item {
+  border: 1px solid #e1e5e9;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.detected-item:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Professional Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #f1f5f9;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+/* Professional Form Elements */
+.form-input {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  transition: all 0.15s ease;
+  font-weight: 400;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Professional Tables and Lists */
+.data-table {
+  border: 1px solid #e1e5e9;
+  background: #ffffff;
+}
+
+.data-table th {
+  background: #f8fafc;
+  border-bottom: 1px solid #e1e5e9;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.data-table td {
+  border-bottom: 1px solid #f1f5f9;
+  color: #4b5563;
+}
+
+/* Professional Tabs */
+.tab-container {
+  background: #f8fafc;
+  border: 1px solid #e1e5e9;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.tab-button.active {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e1e5e9;
+  border-bottom: 1px solid #ffffff;
+  margin-bottom: -1px;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Status Indicators - Corporate Style */
+.status-success {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.status-warning {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.status-error {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.status-info {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* Connection Status */
+.connection-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.connection-indicator.connected {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.connection-indicator.disconnected {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+/* Header Professional Styling */
+.app-header {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  border-bottom: 3px solid #3b82f6;
+}
+
+/* Remove all border-radius for sharp, business look */
+* {
+  border-radius: 0 !important;
+}
+
+/* Animation Overrides - Minimal, Professional */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Professional Spacing */
+.section-spacing {
+  margin-bottom: 2rem;
+}
+
+.content-spacing {
+  margin-bottom: 1.5rem;
+}
+
+/* Grid System for Professional Layout */
+.grid-professional {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .grid-professional {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-professional {
+    grid-template-columns: 3fr 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Typography Improvements */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+p {
+  color: #475569;
+  font-weight: 400;
+}

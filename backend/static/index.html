@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPE Detection System</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .video-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        #video {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        .status-panel {
+            width: 400px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        .status-card {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .status-success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .status-warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        .status-danger {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .status-info {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        .detected-items {
+            margin-top: 15px;
+        }
+        .detected-item {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .required-item {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .optional-item {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .missing-item {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .door-status {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .door-open {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        .door-closed {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🦺 PPE Detection System</h1>
+            <p>Kişisel Koruyucu Ekipman Tespit Sistemi</p>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" onclick="startCamera()">Kamera Başlat</button>
+            <button id="stopBtn" onclick="stopCamera()" disabled>Kamera Durdur</button>
+        </div>
+
+        <div class="door-status" id="doorStatus">
+            🚪 Kapı Durumu: Beklemede
+        </div>
+
+        <div class="video-container">
+            <video id="video" width="640" height="480" autoplay></video>
+            
+            <div class="status-panel">
+                <h3>Tespit Durumu</h3>
+                
+                <div id="statusCard" class="status-card status-info">
+                    <strong>Durum:</strong> Sistem hazır
+                </div>
+
+                <div class="detected-items">
+                    <h4>Tespit Edilen Ekipmanlar:</h4>
+                    <div id="detectedList"></div>
+                </div>
+
+                <div class="detected-items">
+                    <h4>Eksik Zorunlu Ekipmanlar:</h4>
+                    <div id="missingRequiredList"></div>
+                </div>
+
+                <div class="detected-items">
+                    <h4>Eksik Opsiyonel Ekipmanlar:</h4>
+                    <div id="missingOptionalList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let video;
+        let canvas;
+        let ctx;
+        let stream;
+        let isProcessing = false;
+
+        // Türkçe çeviriler
+        const translations = {
+            'helmet': 'Kask',
+            'vest': 'Yelek',
+            'boots': 'Bot',
+            'glove': 'Eldiven',
+            'Dust Mask': 'Toz Maskesi',
+            'Eye Wear': 'Güvenlik Gözlüğü',
+            'Shield': 'Koruyucu Kalkan',
+            'person': 'Kişi'
+        };
+
+        function initializeSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Socket.IO bağlantısı kuruldu');
+                updateStatus('Sunucuya bağlanıldı', 'success');
+            });
+
+            socket.on('disconnect', function() {
+                console.log('Socket.IO bağlantısı kesildi');
+                updateStatus('Sunucu bağlantısı kesildi', 'danger');
+            });
+
+            socket.on('detection_result', function(data) {
+                updateDetectionResults(data);
+                isProcessing = false;
+            });
+
+            socket.on('error', function(data) {
+                console.error('Socket hatası:', data.message);
+                updateStatus('Hata: ' + data.message, 'danger');
+                isProcessing = false;
+            });
+        }
+
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video = document.getElementById('video');
+                    video.srcObject = stream;
+                    
+                    // Canvas oluştur (frame capture için)
+                    canvas = document.createElement('canvas');
+                    canvas.width = 640;
+                    canvas.height = 480;
+                    ctx = canvas.getContext('2d');
+                    
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    
+                    updateStatus('Kamera başlatıldı, tespit başlıyor...', 'success');
+                    
+                    // Frame göndermeye başla
+                    setTimeout(processFrames, 1000);
+                })
+                .catch(function(err) {
+                    console.error('Kamera erişim hatası:', err);
+                    updateStatus('Kamera erişim hatası: ' + err.message, 'danger');
+                });
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            updateStatus('Kamera durduruldu', 'info');
+            updateDoorStatus('Beklemede', false);
+        }
+
+        function processFrames() {
+            if (!stream || !video || isProcessing) {
+                if (stream) {
+                    setTimeout(processFrames, 100);
+                }
+                return;
+            }
+
+            isProcessing = true;
+            
+            // Video frame'ini canvas'a çiz
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Base64 formatında encode et
+            const frameData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Socket.IO ile gönder
+            socket.emit('process_frame', { frame: frameData });
+            
+            // Bir sonraki frame için bekle
+            setTimeout(processFrames, 500); // 2 FPS
+        }
+
+        function updateDetectionResults(data) {
+            const analysis = data.analysis;
+            
+            // Ana durum güncelle
+            let statusClass = 'info';
+            let message = analysis.message;
+            
+            switch(analysis.status) {
+                case 'full_compliance':
+                    statusClass = 'success';
+                    break;
+                case 'partial_compliance':
+                    statusClass = 'warning';
+                    break;
+                case 'non_compliance':
+                    statusClass = 'danger';
+                    break;
+                case 'no_person':
+                    statusClass = 'info';
+                    break;
+                case 'error':
+                    statusClass = 'danger';
+                    break;
+            }
+            
+            updateStatus(message, statusClass);
+            
+            // Kapı durumunu güncelle
+            updateDoorStatus(analysis.can_pass ? 'Açık - Geçiş Onaylandı' : 'Kapalı - Geçiş Reddedildi', analysis.can_pass);
+            
+            // Tespit edilen ekipmanları listele
+            updateDetectedItems(data.detected_items);
+            
+            // Eksik ekipmanları listele
+            updateMissingItems(analysis.missing_required, analysis.missing_optional);
+        }
+
+        function updateStatus(message, type) {
+            const statusCard = document.getElementById('statusCard');
+            statusCard.className = `status-card status-${type}`;
+            statusCard.innerHTML = `<strong>Durum:</strong> ${message}`;
+        }
+
+        function updateDoorStatus(status, isOpen) {
+            const doorStatus = document.getElementById('doorStatus');
+            doorStatus.className = `door-status ${isOpen ? 'door-open' : 'door-closed'}`;
+            doorStatus.innerHTML = `🚪 Kapı Durumu: ${status}`;
+        }
+
+        function updateDetectedItems(items) {
+            const detectedList = document.getElementById('detectedList');
+            detectedList.innerHTML = '';
+            
+            const ppeItems = items.filter(item => item.class_name !== 'person');
+            
+            if (ppeItems.length === 0) {
+                detectedList.innerHTML = '<div class="detected-item">Henüz ekipman tespit edilmedi</div>';
+                return;
+            }
+            
+            ppeItems.forEach(item => {
+                const div = document.createElement('div');
+                const translatedName = translations[item.class_name] || item.class_name;
+                const confidence = Math.round(item.confidence * 100);
+                
+                let itemClass = 'detected-item';
+                if (['helmet', 'vest', 'boots'].includes(item.class_name)) {
+                    itemClass += ' required-item';
+                } else {
+                    itemClass += ' optional-item';
+                }
+                
+                div.className = itemClass;
+                div.innerHTML = `${translatedName} (%${confidence})`;
+                detectedList.appendChild(div);
+            });
+        }
+
+        function updateMissingItems(missingRequired, missingOptional) {
+            // Eksik zorunlu ekipmanlar
+            const missingRequiredList = document.getElementById('missingRequiredList');
+            missingRequiredList.innerHTML = '';
+            
+            if (missingRequired.length === 0) {
+                missingRequiredList.innerHTML = '<div class="detected-item required-item">Tüm zorunlu ekipmanlar mevcut ✓</div>';
+            } else {
+                missingRequired.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'detected-item missing-item';
+                    div.innerHTML = `${translations[item] || item} ❌`;
+                    missingRequiredList.appendChild(div);
+                });
+            }
+            
+            // Eksik opsiyonel ekipmanlar
+            const missingOptionalList = document.getElementById('missingOptionalList');
+            missingOptionalList.innerHTML = '';
+            
+            if (missingOptional.length === 0) {
+                missingOptionalList.innerHTML = '<div class="detected-item optional-item">Tüm opsiyonel ekipmanlar mevcut ✓</div>';
+            } else {
+                missingOptional.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'detected-item optional-item';
+                    div.innerHTML = `${translations[item] || item} ⚠️`;
+                    missingOptionalList.appendChild(div);
+                });
+            }
+        }
+
+        // Sayfa yüklendiğinde socket'i başlat
+        window.onload = function() {
+            initializeSocket();
+        };
+    </script>
+</body>
+</html>

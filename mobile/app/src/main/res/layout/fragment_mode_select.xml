@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:padding="0dp">
+
+  <com.google.android.material.appbar.MaterialToolbar
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:layout_marginBottom="12dp"
+    android:layout_marginStart="0dp"
+    android:layout_marginEnd="0dp"
+    android:background="?attr/colorPrimary"
+    app:titleTextColor="@color/color_on_primary"
+    app:title="Mod Seçimi"/>
+
+  
+
+  <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/modeGrid"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_marginTop="12dp"
+    android:layout_weight="1">
+
+    <com.google.android.material.card.MaterialCardView
+      android:id="@+id/cardCamera"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:layout_marginStart="12dp"
+      android:layout_marginEnd="12dp"
+      app:cardCornerRadius="12dp"
+      app:cardUseCompatPadding="true"
+      app:cardBackgroundColor="@color/color_primary_light"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintBottom_toTopOf="@+id/cardQr"
+      app:layout_constraintVertical_chainStyle="packed"
+      app:layout_constraintDimensionRatio="1:1">
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+          android:id="@+id/iconCamera"
+          android:layout_width="160dp"
+          android:layout_height="160dp"
+          android:layout_gravity="center"
+          android:src="@drawable/ic_camera_tile"
+          android:tint="@color/color_primary_dark"/>
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center_horizontal|bottom"
+          android:layout_marginBottom="16dp"
+          android:text="Telefon Kamerası ile Tespit"
+          android:textStyle="bold"
+          android:textColor="@color/color_primary_dark"/>
+      </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+      android:id="@+id/cardQr"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:layout_margin="12dp"
+      app:cardCornerRadius="12dp"
+      app:cardUseCompatPadding="true"
+      app:cardBackgroundColor="@color/color_primary_light"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintTop_toBottomOf="@id/cardCamera"
+      app:layout_constraintDimensionRatio="1:1">
+
+      <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:foreground="?attr/selectableItemBackground">
+
+        <ImageView
+          android:id="@+id/iconQr"
+          android:layout_width="160dp"
+          android:layout_height="160dp"
+          android:layout_gravity="center"
+          android:src="@drawable/ic_qr_tile"
+          android:tint="@color/color_primary_dark"/>
+
+        <TextView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center_horizontal|bottom"
+          android:layout_marginBottom="16dp"
+          android:text="QR'ımı Göster"
+          android:textStyle="bold"
+          android:textColor="@color/color_primary_dark"/>
+      </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+  </androidx.constraintlayout.widget.ConstraintLayout>
+
+  <com.google.android.material.button.MaterialButton
+    android:id="@+id/btnAdmin"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Admin Panel"
+    android:layout_marginTop="8dp"
+    android:textColor="@color/color_primary_dark"
+    app:backgroundTint="@color/color_primary_light"/>
+
+</LinearLayout>
+
+

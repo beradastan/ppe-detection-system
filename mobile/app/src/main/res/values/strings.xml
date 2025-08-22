@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">PPE</string>
+    <string name="hint_search">Ara</string>
+    <string name="msg_empty">Kayıt bulunamadı</string>
+    <string name="title_mode_select">Mod Seçimi</string>
+    <string name="mode_camera">Telefon Kamerası ile Tespit</string>
+    <string name="mode_qr">QR’ımı Göster</string>
+    <string name="title_camera">Kamera ile Tespit</string>
+    <string name="title_qr">QR’ımı Göster</string>
+    <string name="logout">Çıkış</string>
+    <string name="settings">Ayarlar</string>
+</resources>
