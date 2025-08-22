@@ -681,8 +681,6 @@ class DatabaseManager:
 
             status = detection_result.get("analysis", {}).get("status", "unknown")
 
-
-
             person_detected = detection_result.get("person_detected", False)
 
             if status == "no_person":
