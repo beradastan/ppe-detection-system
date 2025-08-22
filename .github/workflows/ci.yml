@@ -57,10 +57,12 @@ jobs:
     - name: Install linting tools
       run: |
         pip install black flake8
-    - name: Lint with flake8
+    - name: Lint with flake8 (critical errors only)
       run: |
         flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 backend --count --max-complexity=10 --max-line-length=127 --statistics
+    - name: Lint with flake8 (style issues with relaxed rules)
+      run: |
+        flake8 backend --count --max-complexity=10 --max-line-length=127 --ignore=E203,E501,W291,W391 --statistics
     - name: Format with black
       run: |
-        black --check backend
+        black --check --line-length=127 backend

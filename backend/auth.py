@@ -1,258 +1,217 @@
-from jose import jwt 
+from jose import jwt
 
-import uuid 
+import uuid
 
-from datetime import datetime ,timedelta 
+from datetime import datetime, timedelta
 
-from typing import Dict ,Any ,Optional 
+from typing import Dict, Any, Optional
 
-from passlib .context import CryptContext 
+from passlib.context import CryptContext
 
-from fastapi import HTTPException ,Request 
+from fastapi import HTTPException, Request
 
-from config import JWT_SECRET ,JWT_ALGORITHM ,JWT_EXPIRE_MINUTES ,logger 
+from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRE_MINUTES, logger
 
-from database import db_manager 
+from database import db_manager
 
-pwd_context =CryptContext (schemes =["bcrypt"],deprecated ="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class AuthManager :
 
-    def __init__ (self ):
+class AuthManager:
 
-        self .jwt_secret =JWT_SECRET 
+    def __init__(self):
 
-        self .jwt_algorithm =JWT_ALGORITHM 
+        self.jwt_secret = JWT_SECRET
 
-        self .jwt_expire_minutes =JWT_EXPIRE_MINUTES 
+        self.jwt_algorithm = JWT_ALGORITHM
 
-    def hash_password (self ,password :str )->str :
+        self.jwt_expire_minutes = JWT_EXPIRE_MINUTES
 
+    def hash_password(self, password: str) -> str:
 
+        return pwd_context.hash(password)
 
-        return pwd_context .hash (password )
+    def verify_password(self, plain: str, hashed: str) -> bool:
 
-    def verify_password (self ,plain :str ,hashed :str )->bool :
+        try:
 
+            return pwd_context.verify(plain, hashed)
 
+        except Exception:
 
-        try :
+            return False
 
-            return pwd_context .verify (plain ,hashed )
+    def create_token(self, payload: Dict[str, Any], expires_minutes: int = None) -> str:
 
-        except Exception :
+        if expires_minutes is None:
 
-            return False 
+            expires_minutes = self.jwt_expire_minutes
 
-    def create_token (self ,payload :Dict [str ,Any ],expires_minutes :int =None )->str :
+        expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
 
+        to_encode = payload.copy()
 
+        to_encode.update({"exp": expire})
 
-        if expires_minutes is None :
+        return jwt.encode(to_encode, self.jwt_secret, algorithm=self.jwt_algorithm)
 
-            expires_minutes =self .jwt_expire_minutes 
+    def decode_token(self, token: str) -> Dict[str, Any]:
 
-        expire =datetime .utcnow ()+timedelta (minutes =expires_minutes )
+        try:
 
-        to_encode =payload .copy ()
+            return jwt.decode(token, self.jwt_secret, algorithms=[self.jwt_algorithm])
 
-        to_encode .update ({"exp":expire })
+        except jwt.ExpiredSignatureError:
 
-        return jwt .encode (to_encode ,self .jwt_secret ,algorithm =self .jwt_algorithm )
+            raise HTTPException(status_code=401, detail="Token süresi doldu")
 
-    def decode_token (self ,token :str )->Dict [str ,Any ]:
+        except jwt.InvalidTokenError:
 
+            raise HTTPException(status_code=401, detail="Geçersiz token")
 
+    def get_current_user(self, request: Request) -> Dict[str, Any]:
 
-        try :
+        auth = request.headers.get("Authorization")
 
-            return jwt .decode (token ,self .jwt_secret ,algorithms =[self .jwt_algorithm ])
+        if not auth or not auth.lower().startswith("bearer "):
 
-        except jwt .ExpiredSignatureError :
+            raise HTTPException(status_code=401, detail="Yetkilendirme gerekli")
 
-            raise HTTPException (status_code =401 ,detail ="Token süresi doldu")
+        token = auth.split(" ", 1)[1]
 
-        except jwt .InvalidTokenError :
+        payload = self.decode_token(token)
 
-            raise HTTPException (status_code =401 ,detail ="Geçersiz token")
+        username = payload.get("username")
 
-    def get_current_user (self ,request :Request )->Dict [str ,Any ]:
+        role = payload.get("role")
 
+        if not username or not role:
 
+            raise HTTPException(status_code=401, detail="Geçersiz token")
 
-        auth =request .headers .get ("Authorization")
+        user = db_manager.get_user_by_username(username)
 
-        if not auth or not auth .lower ().startswith ("bearer "):
+        if not user or user["role"] != role:
 
-            raise HTTPException (status_code =401 ,detail ="Yetkilendirme gerekli")
+            raise HTTPException(status_code=401, detail="Kullanıcı bulunamadı")
 
-        token =auth .split (" ",1 )[1 ]
+        return {"id": user["id"], "username": user["username"], "role": user["role"]}
 
-        payload =self .decode_token (token )
+    def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
 
-        username =payload .get ("username")
+        user = db_manager.get_user_by_username(username)
 
-        role =payload .get ("role")
+        if not user:
 
-        if not username or not role :
+            return None
 
-            raise HTTPException (status_code =401 ,detail ="Geçersiz token")
+        if not self.verify_password(password, user["password_hash"]):
 
-        user =db_manager .get_user_by_username (username )
+            return None
 
-        if not user or user ["role"]!=role :
+        return user
 
-            raise HTTPException (status_code =401 ,detail ="Kullanıcı bulunamadı")
+    def create_user_token(self, user: Dict[str, Any]) -> str:
 
-        return {"id":user ["id"],"username":user ["username"],"role":user ["role"]}
+        payload = {"username": user["username"], "role": user["role"], "user_id": user["id"], "jti": str(uuid.uuid4())}
 
-    def authenticate_user (self ,username :str ,password :str )->Optional [Dict [str ,Any ]]:
+        return self.create_token(payload)
 
+    def seed_default_users(self):
 
+        try:
 
-        user =db_manager .get_user_by_username (username )
+            username = "ahmet_yilmaz"
 
-        if not user :
+            role = "worker"
 
-            return None 
+            user = db_manager.get_user_by_username(username)
 
-        if not self .verify_password (password ,user ["password_hash"]):
+            if not user:
 
-            return None 
+                password = "AhmetYilmaz!123"
 
-        return user 
+                password_hash = self.hash_password(password)
 
-    def create_user_token (self ,user :Dict [str ,Any ])->str :
+                qr_payload = f'{{"user": "{username }", "user_role": "{role }"}}'
 
+                from utils import generate_qr_base64
 
+                qr_image_base64 = generate_qr_base64(qr_payload)
 
-        payload ={
-
-        "username":user ["username"],
-
-        "role":user ["role"],
-
-        "user_id":user ["id"],
-
-        "jti":str (uuid .uuid4 ())
-
-        }
-
-        return self .create_token (payload )
-
-    def seed_default_users (self ):
-
-
-
-        try :
-
-            username ="ahmet_yilmaz"
-
-            role ="worker"
-
-            user =db_manager .get_user_by_username (username )
-
-            if not user :
-
-                password ="AhmetYilmaz!123"
-
-                password_hash =self .hash_password (password )
-
-                qr_payload =f'{{"user": "{username }", "user_role": "{role }"}}'
-
-                from utils import generate_qr_base64 
-
-                qr_image_base64 =generate_qr_base64 (qr_payload )
-
-                user_id =db_manager .create_user (
-
-                username =username ,
-
-                password_hash =password_hash ,
-
-                role =role ,
-
-                qr_payload =qr_payload ,
-
-                qr_image_base64 =qr_image_base64 ,
-
-                email ="ahmet@test.com",
-
-                full_name ="Ahmet Yılmaz"
-
+                user_id = db_manager.create_user(
+                    username=username,
+                    password_hash=password_hash,
+                    role=role,
+                    qr_payload=qr_payload,
+                    qr_image_base64=qr_image_base64,
+                    email="ahmet@test.com",
+                    full_name="Ahmet Yılmaz",
                 )
 
-                logger .info (f"Kullanıcı 'ahmet_yilmaz' oluşturuldu. ID: {user_id }")
+                logger.info(f"Kullanıcı 'ahmet_yilmaz' oluşturuldu. ID: {user_id }")
 
-            else :
+            else:
 
-                user_id =user ["id"]
+                user_id = user["id"]
 
-                if not user .get ("qr_image_base64"):
+                if not user.get("qr_image_base64"):
 
-                    qr_payload =f'{{"user": "{username }", "user_role": "{role }"}}'
+                    qr_payload = f'{{"user": "{username }", "user_role": "{role }"}}'
 
-                    qr_image_base64 =generate_qr_base64 (qr_payload )
+                    qr_image_base64 = generate_qr_base64(qr_payload)
 
-                    db_manager .update_user_qr (user_id ,qr_image_base64 )
+                    db_manager.update_user_qr(user_id, qr_image_base64)
 
-                    logger .info (f"Kullanıcı 'ahmet_yilmaz' QR kodu güncellendi. ID: {user_id }")
+                    logger.info(f"Kullanıcı 'ahmet_yilmaz' QR kodu güncellendi. ID: {user_id }")
 
-            test_username ="mehmet_demir"
+            test_username = "mehmet_demir"
 
-            test_role ="supervisor"
+            test_role = "supervisor"
 
-            test_user =db_manager .get_user_by_username (test_username )
+            test_user = db_manager.get_user_by_username(test_username)
 
-            if not test_user :
+            if not test_user:
 
-                test_password_hash =self .hash_password ("MehmetDemir!123")
+                test_password_hash = self.hash_password("MehmetDemir!123")
 
-                test_qr_payload =f'{{"user": "{test_username }", "user_role": "{test_role }"}}'
+                test_qr_payload = f'{{"user": "{test_username }", "user_role": "{test_role }"}}'
 
-                test_qr_image_base64 =generate_qr_base64 (test_qr_payload )
+                test_qr_image_base64 = generate_qr_base64(test_qr_payload)
 
-                test_user_id =db_manager .create_user (
-
-                username =test_username ,
-
-                password_hash =test_password_hash ,
-
-                role =test_role ,
-
-                qr_payload =test_qr_payload ,
-
-                qr_image_base64 =test_qr_image_base64 ,
-
-                email ="mehmet@test.com",
-
-                full_name ="Mehmet Demir"
-
+                test_user_id = db_manager.create_user(
+                    username=test_username,
+                    password_hash=test_password_hash,
+                    role=test_role,
+                    qr_payload=test_qr_payload,
+                    qr_image_base64=test_qr_image_base64,
+                    email="mehmet@test.com",
+                    full_name="Mehmet Demir",
                 )
 
-                logger .info (f"Test kullanıcısı 'mehmet_demir' oluşturuldu. ID: {test_user_id }")
+                logger.info(f"Test kullanıcısı 'mehmet_demir' oluşturuldu. ID: {test_user_id }")
 
-            token =self .create_user_token ({"id":user_id ,"username":username ,"role":role })
+            token = self.create_user_token({"id": user_id, "username": username, "role": role})
 
-            try :
+            try:
 
-                with open ("dev_token.txt","w")as f :
+                with open("dev_token.txt", "w") as f:
 
-                    f .write (token )
+                    f.write(token)
 
-            except Exception as fe :
+            except Exception as fe:
 
-                logger .warning (f"dev_token.txt yazılamadı: {fe }")
+                logger.warning(f"dev_token.txt yazılamadı: {fe }")
 
-            logger .info ("Seed kullanıcılar hazır. Test JWT dev_token.txt dosyasına yazıldı.")
+            logger.info("Seed kullanıcılar hazır. Test JWT dev_token.txt dosyasına yazıldı.")
 
-            logger .info (f"QR test: {{\"user\": \"{username }\", \"user_role\": \"{role }\"}}")
+            logger.info(f'QR test: {{"user": "{username }", "user_role": "{role }"}}')
 
-            logger .info (f"QR test: {{\"user\": \"{test_username }\", \"user_role\": \"{test_role }\"}}")
+            logger.info(f'QR test: {{"user": "{test_username }", "user_role": "{test_role }"}}')
 
-        except Exception as e :
+        except Exception as e:
 
-            logger .error (f"Seed kullanıcı oluşturma hatası: {e }")
+            logger.error(f"Seed kullanıcı oluşturma hatası: {e }")
 
-auth_manager =AuthManager ()
 
+auth_manager = AuthManager()

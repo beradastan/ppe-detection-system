@@ -1,40 +1,42 @@
-import sqlite3 
+import sqlite3
 
-import json 
+import json
 
-from typing import Dict ,Any ,Optional ,List 
+from typing import Dict, Any, Optional, List
 
-from config import DB_PATH ,logger 
+from config import DB_PATH, logger
 
-class DatabaseManager :
 
-    def __init__ (self ):
+class DatabaseManager:
 
-        self .db_path =DB_PATH 
+    def __init__(self):
 
-        self .init_database ()
+        self.db_path = DB_PATH
 
-    def init_database (self ):
+        self.init_database()
 
-        try :
+    def init_database(self):
 
-            import os 
+        try:
 
-            os .makedirs (os .path .dirname (self .db_path ),exist_ok =True )
+            import os
 
-            conn =sqlite3 .connect (self .db_path )
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
-            cursor =conn .cursor ()
+            conn = sqlite3.connect(self.db_path)
 
-            cursor .execute ("PRAGMA foreign_keys = ON")
+            cursor = conn.cursor()
 
-            cursor .execute ("PRAGMA journal_mode = WAL")
+            cursor.execute("PRAGMA foreign_keys = ON")
 
-            cursor .execute ("PRAGMA user_version")
+            cursor.execute("PRAGMA journal_mode = WAL")
 
-            user_version =cursor .fetchone ()[0 ]or 0 
+            cursor.execute("PRAGMA user_version")
 
-            cursor .execute ('''
+            user_version = cursor.fetchone()[0] or 0
+
+            cursor.execute(
+                """
 
                 CREATE TABLE IF NOT EXISTS users (
 
@@ -62,9 +64,11 @@ class DatabaseManager :
 
                 )
 
-            ''')
+            """
+            )
 
-            cursor .execute ('''
+            cursor.execute(
+                """
 
                 CREATE TABLE IF NOT EXISTS access_logs (
 
@@ -94,125 +98,125 @@ class DatabaseManager :
 
                 )
 
-            ''')
+            """
+            )
 
-            cursor .execute ("CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_access_logs_user_id ON access_logs(user_id)")
 
-            cursor .execute ("CREATE INDEX IF NOT EXISTS idx_access_logs_timestamp ON access_logs(timestamp)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_access_logs_timestamp ON access_logs(timestamp)")
 
-            cursor .execute ("CREATE INDEX IF NOT EXISTS idx_access_logs_can_pass ON access_logs(can_pass)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_access_logs_can_pass ON access_logs(can_pass)")
 
-            cursor .execute ("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
 
-            cursor .execute ("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)")
 
-            if user_version ==0 :
+            if user_version == 0:
 
-                cursor .execute ("PRAGMA user_version = 1")
+                cursor.execute("PRAGMA user_version = 1")
 
-            conn .commit ()
+            conn.commit()
 
-            conn .close ()
+            conn.close()
 
-            logger .info ("✅ Veritabanı hazır: mevcutsa korundu, yoksa oluşturuldu.")
+            logger.info("✅ Veritabanı hazır: mevcutsa korundu, yoksa oluşturuldu.")
 
-        except Exception as e :
+        except Exception as e:
 
-            logger .error (f"Veritabanı init hatası: {e }")
+            logger.error(f"Veritabanı init hatası: {e }")
 
-            raise 
+            raise
 
-    def get_connection (self ):
+    def get_connection(self):
 
+        conn = sqlite3.connect(self.db_path, timeout=1.0)
 
+        conn.execute("PRAGMA foreign_keys = ON")
 
-        conn =sqlite3 .connect (self .db_path ,timeout =1.0 )
+        conn.execute("PRAGMA journal_mode = WAL")
 
-        conn .execute ("PRAGMA foreign_keys = ON")
+        return conn
 
-        conn .execute ("PRAGMA journal_mode = WAL")
+    def get_connection_with_row_factory(self):
 
-        return conn 
+        conn = self.get_connection()
 
-    def get_connection_with_row_factory (self ):
+        conn.row_factory = sqlite3.Row
 
+        return conn
 
+    def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
 
-        conn =self .get_connection ()
+        try:
 
-        conn .row_factory =sqlite3 .Row 
+            conn = self.get_connection_with_row_factory()
 
-        return conn 
+            cur = conn.cursor()
 
-    def get_user_by_id (self ,user_id :int )->Optional [Dict [str ,Any ]]:
+            cur.execute("SELECT * FROM users WHERE id = ? AND is_active = 1", (user_id,))
 
+            row = cur.fetchone()
 
+            conn.close()
 
-        try :
+            if row:
 
-            conn =self .get_connection_with_row_factory ()
+                return dict(row)
 
-            cur =conn .cursor ()
+            return None
 
-            cur .execute ("SELECT * FROM users WHERE id = ? AND is_active = 1",(user_id ,))
+        except Exception as e:
 
-            row =cur .fetchone ()
+            logger.error(f"Kullanıcı ID ile getirme hatası: {e }")
 
-            conn .close ()
+            return None
 
-            if row :
+    def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
 
-                return dict (row )
+        try:
 
-            return None 
+            conn = self.get_connection_with_row_factory()
 
-        except Exception as e :
+            cur = conn.cursor()
 
-            logger .error (f"Kullanıcı ID ile getirme hatası: {e }")
+            cur.execute("SELECT * FROM users WHERE username = ? AND is_active = 1", (username,))
 
-            return None 
+            row = cur.fetchone()
 
-    def get_user_by_username (self ,username :str )->Optional [Dict [str ,Any ]]:
+            conn.close()
 
+            if row:
 
+                return dict(row)
 
-        try :
+            return None
 
-            conn =self .get_connection_with_row_factory ()
+        except Exception as e:
 
-            cur =conn .cursor ()
+            logger.error(f"Kullanıcı username ile getirme hatası: {e }")
 
-            cur .execute ("SELECT * FROM users WHERE username = ? AND is_active = 1",(username ,))
+            return None
 
-            row =cur .fetchone ()
+    def create_user(
+        self,
+        username: str,
+        password_hash: str,
+        role: str,
+        qr_payload: str,
+        qr_image_base64: str,
+        email: Optional[str] = None,
+        full_name: Optional[str] = None,
+        supervisor_id: Optional[int] = None,
+    ) -> int:
 
-            conn .close ()
+        try:
 
-            if row :
+            conn = self.get_connection()
 
-                return dict (row )
+            cur = conn.cursor()
 
-            return None 
-
-        except Exception as e :
-
-            logger .error (f"Kullanıcı username ile getirme hatası: {e }")
-
-            return None 
-
-    def create_user (self ,username :str ,password_hash :str ,role :str ,qr_payload :str ,
-
-    qr_image_base64 :str ,email :Optional [str ]=None ,
-
-    full_name :Optional [str ]=None ,supervisor_id :Optional [int ]=None )->int :
-
-        try :
-
-            conn =self .get_connection ()
-
-            cur =conn .cursor ()
-
-            cur .execute ('''
+            cur.execute(
+                """
 
                 INSERT INTO users (username, password_hash, role, qr_payload, qr_image_base64, 
 
@@ -220,57 +224,54 @@ class DatabaseManager :
 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
-            ''',(username ,password_hash ,role ,qr_payload ,qr_image_base64 ,
+            """,
+                (username, password_hash, role, qr_payload, qr_image_base64, email, full_name, supervisor_id),
+            )
 
-            email ,full_name ,supervisor_id ))
+            conn.commit()
 
-            conn .commit ()
+            user_id = cur.lastrowid
 
-            user_id =cur .lastrowid 
+            conn.close()
 
-            conn .close ()
+            return user_id
 
-            return user_id 
+        except Exception as e:
 
-        except Exception as e :
+            logger.error(f"Kullanıcı oluşturma hatası: {e }")
 
-            logger .error (f"Kullanıcı oluşturma hatası: {e }")
+            raise
 
-            raise 
+    def update_user_qr(self, user_id: int, qr_image_base64: str):
 
-    def update_user_qr (self ,user_id :int ,qr_image_base64 :str ):
+        try:
 
+            conn = self.get_connection()
 
+            cur = conn.cursor()
 
-        try :
+            cur.execute("UPDATE users SET qr_image_base64 = ? WHERE id = ?", (qr_image_base64, user_id))
 
-            conn =self .get_connection ()
+            conn.commit()
 
-            cur =conn .cursor ()
+            conn.close()
 
-            cur .execute ("UPDATE users SET qr_image_base64 = ? WHERE id = ?",(qr_image_base64 ,user_id ))
+        except Exception as e:
 
-            conn .commit ()
+            logger.error(f"QR güncelleme hatası: {e }")
 
-            conn .close ()
+            raise
 
-        except Exception as e :
+    def list_supervisors(self) -> List[Dict[str, Any]]:
 
-            logger .error (f"QR güncelleme hatası: {e }")
+        try:
 
-            raise 
+            conn = self.get_connection_with_row_factory()
 
-    def list_supervisors (self )->List [Dict [str ,Any ]]:
+            cur = conn.cursor()
 
-
-
-        try :
-
-            conn =self .get_connection_with_row_factory ()
-
-            cur =conn .cursor ()
-
-            cur .execute ("""
+            cur.execute(
+                """
 
                 SELECT id, username, COALESCE(full_name, '') AS full_name
 
@@ -280,37 +281,37 @@ class DatabaseManager :
 
                 ORDER BY (full_name IS NULL OR TRIM(full_name)=''), full_name, username
 
-            """)
+            """
+            )
 
-            rows =[dict (r )for r in cur .fetchall ()]
+            rows = [dict(r) for r in cur.fetchall()]
 
-            conn .close ()
+            conn.close()
 
-            return rows 
+            return rows
 
-        except Exception as e :
+        except Exception as e:
 
-            logger .error (f"Supervisor listeleme hatası: {e }")
+            logger.error(f"Supervisor listeleme hatası: {e }")
 
             return []
 
-    def get_logs (self ,limit :int =100 ,offset :int =0 ,supervisor_id :Optional [int ]=None )->Dict [str ,Any ]:
+    def get_logs(self, limit: int = 100, offset: int = 0, supervisor_id: Optional[int] = None) -> Dict[str, Any]:
 
+        try:
 
+            conn = self.get_connection()
 
-        try :
+            cursor = conn.cursor()
 
-            conn =self .get_connection ()
+            if supervisor_id is None:
 
-            cursor =conn .cursor ()
+                cursor.execute("SELECT COUNT(*) FROM access_logs")
 
-            if supervisor_id is None :
+                total_count = cursor.fetchone()[0]
 
-                cursor .execute ('SELECT COUNT(*) FROM access_logs')
-
-                total_count =cursor .fetchone ()[0 ]
-
-                cursor .execute ('''
+                cursor.execute(
+                    """
 
                                SELECT al.id,
 
@@ -350,11 +351,14 @@ class DatabaseManager :
 
                                OFFSET ?
 
-                               ''',(limit ,offset ))
+                               """,
+                    (limit, offset),
+                )
 
-            else :
+            else:
 
-                cursor .execute ('''
+                cursor.execute(
+                    """
 
                                SELECT COUNT(*)
 
@@ -366,11 +370,14 @@ class DatabaseManager :
 
                                  AND u.supervisor_id = ?
 
-                               ''',(supervisor_id ,))
+                               """,
+                    (supervisor_id,),
+                )
 
-                total_count =cursor .fetchone ()[0 ]
+                total_count = cursor.fetchone()[0]
 
-                cursor .execute ('''
+                cursor.execute(
+                    """
 
                                SELECT al.id,
 
@@ -414,113 +421,103 @@ class DatabaseManager :
 
                                OFFSET ?
 
-                               ''',(supervisor_id ,limit ,offset ))
+                               """,
+                    (supervisor_id, limit, offset),
+                )
 
-            rows =cursor .fetchall ()
+            rows = cursor.fetchall()
 
-            logs =[]
+            logs = []
 
-            for row in rows :
+            for row in rows:
 
-                logs .append ({
+                logs.append(
+                    {
+                        "id": row[0],
+                        "user_id": row[1],
+                        "timestamp": row[2],
+                        "can_pass": bool(row[3]),
+                        "status": row[4],
+                        "missing_required": row[5].split(", ") if row[5] else [],
+                        "missing_optional": row[6].split(", ") if row[6] else [],
+                        "detected_items": json.loads(row[7]) if row[7] else [],
+                        "person_detected": bool(row[8]),
+                        "confidence_scores": json.loads(row[9]) if row[9] else {},
+                        "frame_image": row[10],
+                        "username": row[11],
+                        "user_role": row[12],
+                        "full_name": row[13],
+                        "email": row[14],
+                    }
+                )
 
-                'id':row [0 ],
+            conn.close()
 
-                'user_id':row [1 ],
+            return {"logs": logs, "total_count": total_count, "limit": limit, "offset": offset}
 
-                'timestamp':row [2 ],
+        except Exception as e:
 
-                'can_pass':bool (row [3 ]),
+            logger.error(f"Log getirme hatası: {e }")
 
-                'status':row [4 ],
+            return {"error": f"Log getirme hatası: {str (e )}"}
 
-                'missing_required':row [5 ].split (', ')if row [5 ]else [],
+    def get_log_frame(self, log_id: int) -> Dict[str, Any]:
 
-                'missing_optional':row [6 ].split (', ')if row [6 ]else [],
+        try:
 
-                'detected_items':json .loads (row [7 ])if row [7 ]else [],
+            conn = self.get_connection()
 
-                'person_detected':bool (row [8 ]),
+            cursor = conn.cursor()
 
-                'confidence_scores':json .loads (row [9 ])if row [9 ]else {},
-
-                'frame_image':row [10 ],
-
-                'username':row [11 ],
-
-                'user_role':row [12 ],
-
-                'full_name':row [13 ],
-
-                'email':row [14 ]
-
-                })
-
-            conn .close ()
-
-            return {"logs":logs ,"total_count":total_count ,"limit":limit ,"offset":offset }
-
-        except Exception as e :
-
-            logger .error (f"Log getirme hatası: {e }")
-
-            return {"error":f"Log getirme hatası: {str (e )}"}
-
-    def get_log_frame (self ,log_id :int )->Dict [str ,Any ]:
-
-
-
-        try :
-
-            conn =self .get_connection ()
-
-            cursor =conn .cursor ()
-
-            cursor .execute ('''
+            cursor.execute(
+                """
 
                 SELECT frame_image FROM access_logs 
 
                 WHERE id = ? AND frame_image IS NOT NULL
 
-            ''',(log_id ,))
+            """,
+                (log_id,),
+            )
 
-            result =cursor .fetchone ()
+            result = cursor.fetchone()
 
-            conn .close ()
+            conn.close()
 
-            if result and result [0 ]:
+            if result and result[0]:
 
-                return {"frame_image":result [0 ]}
+                return {"frame_image": result[0]}
 
-            else :
+            else:
 
-                return {"error":"Frame bulunamadı"}
+                return {"error": "Frame bulunamadı"}
 
-        except Exception as e :
+        except Exception as e:
 
-            logger .error (f"Frame getirme hatası: {e }")
+            logger.error(f"Frame getirme hatası: {e }")
 
-            return {"error":f"Frame getirme hatası: {str (e )}"}
+            return {"error": f"Frame getirme hatası: {str (e )}"}
 
-    def get_log_stats (self ,supervisor_id :Optional [int ]=None )->Dict [str ,Any ]:
+    def get_log_stats(self, supervisor_id: Optional[int] = None) -> Dict[str, Any]:
 
-        try :
+        try:
 
-            conn =self .get_connection ()
+            conn = self.get_connection()
 
-            cursor =conn .cursor ()
+            cursor = conn.cursor()
 
-            if supervisor_id is None :
+            if supervisor_id is None:
 
-                cursor .execute ("SELECT COUNT(DISTINCT user_id) FROM access_logs WHERE can_pass = 1")
+                cursor.execute("SELECT COUNT(DISTINCT user_id) FROM access_logs WHERE can_pass = 1")
 
-                total_passed =cursor .fetchone ()[0 ]
+                total_passed = cursor.fetchone()[0]
 
-                cursor .execute ("SELECT COUNT(DISTINCT user_id) FROM access_logs WHERE can_pass = 0")
+                cursor.execute("SELECT COUNT(DISTINCT user_id) FROM access_logs WHERE can_pass = 0")
 
-                total_denied =cursor .fetchone ()[0 ]
+                total_denied = cursor.fetchone()[0]
 
-                cursor .execute ("""
+                cursor.execute(
+                    """
 
                                SELECT COUNT(DISTINCT user_id)
 
@@ -528,11 +525,13 @@ class DatabaseManager :
 
                                WHERE can_pass = 1 AND DATE (timestamp) = DATE ('now')
 
-                               """)
+                               """
+                )
 
-                today_passed =cursor .fetchone ()[0 ]
+                today_passed = cursor.fetchone()[0]
 
-                cursor .execute ("""
+                cursor.execute(
+                    """
 
                                SELECT COUNT(DISTINCT user_id)
 
@@ -540,17 +539,18 @@ class DatabaseManager :
 
                                WHERE can_pass = 0 AND DATE (timestamp) = DATE ('now')
 
-                               """)
+                               """
+                )
 
-                today_denied =cursor .fetchone ()[0 ]
+                today_denied = cursor.fetchone()[0]
 
-                cursor .execute ("SELECT COUNT(*) FROM users WHERE is_active = 1")
+                cursor.execute("SELECT COUNT(*) FROM users WHERE is_active = 1")
 
-                total_users =cursor .fetchone ()[0 ]
+                total_users = cursor.fetchone()[0]
 
-            else :
+            else:
 
-                base ="""
+                base = """
 
                     FROM access_logs al
 
@@ -564,31 +564,30 @@ class DatabaseManager :
 
                 """
 
-                cursor .execute ("SELECT COUNT(DISTINCT al.user_id) "+base +" AND al.can_pass = 1",(supervisor_id ,))
+                cursor.execute("SELECT COUNT(DISTINCT al.user_id) " + base + " AND al.can_pass = 1", (supervisor_id,))
 
-                total_passed =cursor .fetchone ()[0 ]
+                total_passed = cursor.fetchone()[0]
 
-                cursor .execute ("SELECT COUNT(DISTINCT al.user_id) "+base +" AND al.can_pass = 0",(supervisor_id ,))
+                cursor.execute("SELECT COUNT(DISTINCT al.user_id) " + base + " AND al.can_pass = 0", (supervisor_id,))
 
-                total_denied =cursor .fetchone ()[0 ]
+                total_denied = cursor.fetchone()[0]
 
-                cursor .execute (
+                cursor.execute(
+                    "SELECT COUNT(DISTINCT al.user_id) " + base + " AND al.can_pass = 1 AND DATE(al.timestamp) = DATE('now')",
+                    (supervisor_id,),
+                )
 
-                "SELECT COUNT(DISTINCT al.user_id) "+base +" AND al.can_pass = 1 AND DATE(al.timestamp) = DATE('now')",
+                today_passed = cursor.fetchone()[0]
 
-                (supervisor_id ,))
+                cursor.execute(
+                    "SELECT COUNT(DISTINCT al.user_id) " + base + " AND al.can_pass = 0 AND DATE(al.timestamp) = DATE('now')",
+                    (supervisor_id,),
+                )
 
-                today_passed =cursor .fetchone ()[0 ]
+                today_denied = cursor.fetchone()[0]
 
-                cursor .execute (
-
-                "SELECT COUNT(DISTINCT al.user_id) "+base +" AND al.can_pass = 0 AND DATE(al.timestamp) = DATE('now')",
-
-                (supervisor_id ,))
-
-                today_denied =cursor .fetchone ()[0 ]
-
-                cursor .execute ("""
+                cursor.execute(
+                    """
 
                                SELECT COUNT(*)
 
@@ -600,111 +599,108 @@ class DatabaseManager :
 
                                  AND supervisor_id = ?
 
-                               """,(supervisor_id ,))
+                               """,
+                    (supervisor_id,),
+                )
 
-                total_users =cursor .fetchone ()[0 ]
+                total_users = cursor.fetchone()[0]
 
-            conn .close ()
+            conn.close()
 
             return {
-
-            "total_passed":total_passed ,
-
-            "total_denied":total_denied ,
-
-            "today_passed":today_passed ,
-
-            "today_denied":today_denied ,
-
-            "total_users":total_users 
-
+                "total_passed": total_passed,
+                "total_denied": total_denied,
+                "today_passed": today_passed,
+                "today_denied": today_denied,
+                "total_users": total_users,
             }
 
-        except Exception as e :
+        except Exception as e:
 
-            logger .error (f"İstatistik getirme hatası: {e }")
+            logger.error(f"İstatistik getirme hatası: {e }")
 
-            return {"error":f"İstatistik getirme hatası: {str (e )}"}
+            return {"error": f"İstatistik getirme hatası: {str (e )}"}
 
-    def log_access (self ,detection_result :Dict [str ,Any ]):
+    def log_access(self, detection_result: Dict[str, Any]):
 
-        try :
+        try:
 
-            conn =self .get_connection ()
+            conn = self.get_connection()
 
-            cursor =conn .cursor ()
+            cursor = conn.cursor()
 
-            user_id =detection_result .get ('user_id')
+            user_id = detection_result.get("user_id")
 
-            username =detection_result .get ('username')
+            username = detection_result.get("username")
 
-            user_role =detection_result .get ('user_role')
+            user_role = detection_result.get("user_role")
 
-            logger .info (f"Log fonksiyonuna gelen veriler - ID: {user_id }, Username: {username }, Role: {user_role }")
+            logger.info(f"Log fonksiyonuna gelen veriler - ID: {user_id }, Username: {username }, Role: {user_role }")
 
-            if not user_id :
+            if not user_id:
 
-                logger .warning (f"Log atlandı - user_id eksik: {user_id }")
+                logger.warning(f"Log atlandı - user_id eksik: {user_id }")
 
-                conn .close ()
+                conn.close()
 
-                return 
+                return
 
-            cursor .execute ("SELECT id, username, role FROM users WHERE id = ? AND is_active = 1",(user_id ,))
+            cursor.execute("SELECT id, username, role FROM users WHERE id = ? AND is_active = 1", (user_id,))
 
-            user_row =cursor .fetchone ()
+            user_row = cursor.fetchone()
 
-            if not user_row :
+            if not user_row:
 
-                logger .warning (f"Log atlandı - user_id {user_id } DB'de bulunamadı")
+                logger.warning(f"Log atlandı - user_id {user_id } DB'de bulunamadı")
 
-                conn .close ()
+                conn.close()
 
-                return 
+                return
 
-            logger .info (f"Log kaydı başlatılıyor - User: {user_row [1 ]} ({user_row [2 ]}) ID: {user_id }")
+            logger.info(f"Log kaydı başlatılıyor - User: {user_row [1 ]} ({user_row [2 ]}) ID: {user_id }")
 
-            detected_items_json =json .dumps ([item ['class_name']for item in detection_result .get ('detected_items',[])])
+            detected_items_json = json.dumps([item["class_name"] for item in detection_result.get("detected_items", [])])
 
-            confidence_scores ={}
+            confidence_scores = {}
 
-            for item in detection_result .get ('detected_items',[]):
+            for item in detection_result.get("detected_items", []):
 
-                confidence_scores [item ['class_name']]=item ['confidence']
+                confidence_scores[item["class_name"]] = item["confidence"]
 
-            confidence_json =json .dumps (confidence_scores )
+            confidence_json = json.dumps(confidence_scores)
 
-            missing_required_list =detection_result .get ('analysis',{}).get ('missing_required',[])
+            missing_required_list = detection_result.get("analysis", {}).get("missing_required", [])
 
-            missing_optional_list =detection_result .get ('analysis',{}).get ('missing_optional',[])
+            missing_optional_list = detection_result.get("analysis", {}).get("missing_optional", [])
 
-            missing_required_str =', '.join (missing_required_list )
+            missing_required_str = ", ".join(missing_required_list)
 
-            missing_optional_str =', '.join (missing_optional_list )
+            missing_optional_str = ", ".join(missing_optional_list)
 
-            can_pass =detection_result .get ('analysis',{}).get ('can_pass',False )
+            can_pass = detection_result.get("analysis", {}).get("can_pass", False)
 
-            status =detection_result .get ('analysis',{}).get ('status','unknown')
+            status = detection_result.get("analysis", {}).get("status", "unknown")
 
-            message =detection_result .get ('analysis',{}).get ('message','')
 
-            person_detected =detection_result .get ('person_detected',False )
 
-            if status =='no_person':
+            person_detected = detection_result.get("person_detected", False)
 
-                logger .info (f"No-person durumu algılandı (user_id={user_id }). DB log atlandı.")
+            if status == "no_person":
 
-                conn .close ()
+                logger.info(f"No-person durumu algılandı (user_id={user_id }). DB log atlandı.")
 
-                return 
+                conn.close()
 
-            frame_image_base64 =None 
+                return
 
-            if 'frame_image'in detection_result :
+            frame_image_base64 = None
 
-                frame_image_base64 =detection_result ['frame_image']
+            if "frame_image" in detection_result:
 
-            cursor .execute ('''
+                frame_image_base64 = detection_result["frame_image"]
+
+            cursor.execute(
+                """
 
                 SELECT id, can_pass, frame_image, missing_required, missing_optional 
 
@@ -714,19 +710,22 @@ class DatabaseManager :
 
                 ORDER BY timestamp DESC
 
-            ''',(user_id ,))
+            """,
+                (user_id,),
+            )
 
-            existing_logs =cursor .fetchall ()
+            existing_logs = cursor.fetchall()
 
-            if can_pass :
+            if can_pass:
 
-                if existing_logs :
+                if existing_logs:
 
-                    cursor .execute ('DELETE FROM access_logs WHERE user_id = ?',(user_id ,))
+                    cursor.execute("DELETE FROM access_logs WHERE user_id = ?", (user_id,))
 
-                    logger .info (f"Kullanıcı ID {user_id } için önceki tüm loglar silindi (başarılı geçiş)")
+                    logger.info(f"Kullanıcı ID {user_id } için önceki tüm loglar silindi (başarılı geçiş)")
 
-                cursor .execute ('''
+                cursor.execute(
+                    """
 
                     INSERT INTO access_logs (
 
@@ -736,51 +735,58 @@ class DatabaseManager :
 
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
-                ''',(
+                """,
+                    (
+                        user_id,
+                        can_pass,
+                        status,
+                        missing_required_str,
+                        missing_optional_str,
+                        detected_items_json,
+                        person_detected,
+                        confidence_json,
+                        frame_image_base64,
+                    ),
+                )
 
-                user_id ,can_pass ,status ,missing_required_str ,missing_optional_str ,
+                logger.info(f"Kullanıcı ID {user_id } için başarılı geçiş logu eklendi")
 
-                detected_items_json ,person_detected ,confidence_json ,frame_image_base64 
+            else:
 
-                ))
+                current_missing_count = len(missing_required_list) + len(missing_optional_list)
 
-                logger .info (f"Kullanıcı ID {user_id } için başarılı geçiş logu eklendi")
+                best_log = None
 
-            else :
+                best_missing_count = float("inf")
 
-                current_missing_count =len (missing_required_list )+len (missing_optional_list )
+                for log in existing_logs:
 
-                best_log =None 
+                    log_id, log_can_pass, log_frame, log_missing_req, log_missing_opt = log
 
-                best_missing_count =float ('inf')
+                    if not log_can_pass:
 
-                for log in existing_logs :
+                        log_req_count = len(log_missing_req.split(", ")) if log_missing_req else 0
 
-                    log_id ,log_can_pass ,log_frame ,log_missing_req ,log_missing_opt =log 
+                        log_opt_count = len(log_missing_opt.split(", ")) if log_missing_opt else 0
 
-                    if not log_can_pass :
+                        log_total_missing = log_req_count + log_opt_count
 
-                        log_req_count =len (log_missing_req .split (', '))if log_missing_req else 0 
+                        if log_total_missing < best_missing_count:
 
-                        log_opt_count =len (log_missing_opt .split (', '))if log_missing_opt else 0 
+                            best_missing_count = log_total_missing
 
-                        log_total_missing =log_req_count +log_opt_count 
+                            best_log = log
 
-                        if log_total_missing <best_missing_count :
+                if current_missing_count < best_missing_count:
 
-                            best_missing_count =log_total_missing 
+                    if existing_logs:
 
-                            best_log =log 
+                        cursor.execute("DELETE FROM access_logs WHERE user_id = ?", (user_id,))
 
-                if current_missing_count <best_missing_count :
+                        logger.info(f"Kullanıcı ID {user_id } için önceki loglar silindi (daha iyi başarısız log)")
 
-                    if existing_logs :
-
-                        cursor .execute ('DELETE FROM access_logs WHERE user_id = ?',(user_id ,))
-
-                        logger .info (f"Kullanıcı ID {user_id } için önceki loglar silindi (daha iyi başarısız log)")
-
-                    cursor .execute ('''
+                    cursor.execute(
+                        """
 
                         INSERT INTO access_logs (
 
@@ -790,21 +796,30 @@ class DatabaseManager :
 
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
-                    ''',(
+                    """,
+                        (
+                            user_id,
+                            can_pass,
+                            status,
+                            missing_required_str,
+                            missing_optional_str,
+                            detected_items_json,
+                            person_detected,
+                            confidence_json,
+                            frame_image_base64,
+                        ),
+                    )
 
-                    user_id ,can_pass ,status ,missing_required_str ,missing_optional_str ,
+                    logger.info(
+                        f"Kullanıcı ID {user_id } için daha iyi başarısız log eklendi ({current_missing_count } eksik) + fotoğraf"
+                    )
 
-                    detected_items_json ,person_detected ,confidence_json ,frame_image_base64 
+                elif current_missing_count == best_missing_count and best_log and frame_image_base64:
 
-                    ))
+                    best_log_id = best_log[0]
 
-                    logger .info (f"Kullanıcı ID {user_id } için daha iyi başarısız log eklendi ({current_missing_count } eksik) + fotoğraf")
-
-                elif current_missing_count ==best_missing_count and best_log and frame_image_base64 :
-
-                    best_log_id =best_log [0 ]
-
-                    cursor .execute ('''
+                    cursor.execute(
+                        """
 
                         UPDATE access_logs SET 
 
@@ -816,21 +831,24 @@ class DatabaseManager :
 
                         WHERE id = ?
 
-                    ''',(status ,detected_items_json ,person_detected ,confidence_json ,frame_image_base64 ,best_log_id ))
+                    """,
+                        (status, detected_items_json, person_detected, confidence_json, frame_image_base64, best_log_id),
+                    )
 
-                    logger .info (f"Kullanıcı ID {user_id } için aynı seviye başarısız log güncellendi + yeni fotoğraf")
+                    logger.info(f"Kullanıcı ID {user_id } için aynı seviye başarısız log güncellendi + yeni fotoğraf")
 
-                elif best_log :
+                elif best_log:
 
-                    best_log_id =best_log [0 ]
+                    best_log_id = best_log[0]
 
-                    cursor .execute ('UPDATE access_logs SET timestamp = CURRENT_TIMESTAMP WHERE id = ?',(best_log_id ,))
+                    cursor.execute("UPDATE access_logs SET timestamp = CURRENT_TIMESTAMP WHERE id = ?", (best_log_id,))
 
-                    logger .info (f"Kullanıcı ID {user_id } için mevcut en iyi log korundu ({best_missing_count } eksik)")
+                    logger.info(f"Kullanıcı ID {user_id } için mevcut en iyi log korundu ({best_missing_count } eksik)")
 
-                else :
+                else:
 
-                    cursor .execute ('''
+                    cursor.execute(
+                        """
 
                         INSERT INTO access_logs (
 
@@ -840,33 +858,39 @@ class DatabaseManager :
 
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
-                    ''',(
+                    """,
+                        (
+                            user_id,
+                            can_pass,
+                            status,
+                            missing_required_str,
+                            missing_optional_str,
+                            detected_items_json,
+                            person_detected,
+                            confidence_json,
+                            frame_image_base64,
+                        ),
+                    )
 
-                    user_id ,can_pass ,status ,missing_required_str ,missing_optional_str ,
+                    logger.info(f"Kullanıcı ID {user_id } için ilk başarısız log eklendi + fotoğraf")
 
-                    detected_items_json ,person_detected ,confidence_json ,frame_image_base64 
+            conn.commit()
 
-                    ))
+            conn.close()
 
-                    logger .info (f"Kullanıcı ID {user_id } için ilk başarısız log eklendi + fotoğraf")
+        except sqlite3.OperationalError as e:
 
-            conn .commit ()
+            if "locked" in str(e).lower():
 
-            conn .close ()
+                logger.warning("Veritabanı kilitli, log atlandı")
 
-        except sqlite3 .OperationalError as e :
+            else:
 
-            if "locked"in str (e ).lower ():
+                logger.error(f"SQLite hatası: {e }")
 
-                logger .warning ("Veritabanı kilitli, log atlandı")
+        except Exception as e:
 
-            else :
+            logger.error(f"Log kaydetme hatası: {e }")
 
-                logger .error (f"SQLite hatası: {e }")
 
-        except Exception as e :
-
-            logger .error (f"Log kaydetme hatası: {e }")
-
-db_manager =DatabaseManager ()
-
+db_manager = DatabaseManager()

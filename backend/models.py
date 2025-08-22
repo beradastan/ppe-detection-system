@@ -1,136 +1,146 @@
-from pydantic import BaseModel 
+from pydantic import BaseModel
 
-from typing import Optional 
+from typing import Optional
 
-class FrameRequest (BaseModel ):
 
-    frame :str 
+class FrameRequest(BaseModel):
 
-    user :Optional [str ]=None 
+    frame: str
 
-    user_role :Optional [str ]=None 
+    user: Optional[str] = None
 
-class LoginRequest (BaseModel ):
+    user_role: Optional[str] = None
 
-    username :str 
 
-    password :str 
+class LoginRequest(BaseModel):
 
-class RegisterRequest (BaseModel ):
+    username: str
 
-    username :str 
+    password: str
 
-    password :str 
 
-    role :str ="worker"
+class RegisterRequest(BaseModel):
 
-    email :Optional [str ]=None 
+    username: str
 
-    full_name :Optional [str ]=None 
+    password: str
 
-    supervisor_id :Optional [int ]=None 
+    role: str = "worker"
 
-class CreateUserRequest (BaseModel ):
+    email: Optional[str] = None
 
-    username :str 
+    full_name: Optional[str] = None
 
-    password :str 
+    supervisor_id: Optional[int] = None
 
-    role :str 
 
-class UserResponse (BaseModel ):
+class CreateUserRequest(BaseModel):
 
-    id :int 
+    username: str
 
-    username :str 
+    password: str
 
-    role :str 
+    role: str
 
-    email :Optional [str ]=None 
 
-    full_name :Optional [str ]=None 
+class UserResponse(BaseModel):
 
-    supervisor_id :Optional [int ]=None 
+    id: int
 
-    qr_image_base64 :Optional [str ]=None 
+    username: str
 
-class LoginResponse (BaseModel ):
+    role: str
 
-    access_token :str 
+    email: Optional[str] = None
 
-    token_type :str 
+    full_name: Optional[str] = None
 
-    user :UserResponse 
+    supervisor_id: Optional[int] = None
 
-class RegisterResponse (BaseModel ):
+    qr_image_base64: Optional[str] = None
 
-    message :str 
 
-    access_token :str 
+class LoginResponse(BaseModel):
 
-    token_type :str 
+    access_token: str
 
-    user :UserResponse 
+    token_type: str
 
-class LogEntry (BaseModel ):
+    user: UserResponse
 
-    id :int 
 
-    user_id :int 
+class RegisterResponse(BaseModel):
 
-    timestamp :str 
+    message: str
 
-    can_pass :bool 
+    access_token: str
 
-    status :str 
+    token_type: str
 
-    missing_required :list 
+    user: UserResponse
 
-    missing_optional :list 
 
-    detected_items :list 
+class LogEntry(BaseModel):
 
-    person_detected :bool 
+    id: int
 
-    confidence_scores :dict 
+    user_id: int
 
-    frame_image :Optional [str ]=None 
+    timestamp: str
 
-    username :str 
+    can_pass: bool
 
-    user_role :str 
+    status: str
 
-    full_name :Optional [str ]=None 
+    missing_required: list
 
-    email :Optional [str ]=None 
+    missing_optional: list
 
-class LogsResponse (BaseModel ):
+    detected_items: list
 
-    logs :list [LogEntry ]
+    person_detected: bool
 
-    total_count :int 
+    confidence_scores: dict
 
-    limit :int 
+    frame_image: Optional[str] = None
 
-    offset :int 
+    username: str
 
-class LogStatsResponse (BaseModel ):
+    user_role: str
 
-    total_passed :int 
+    full_name: Optional[str] = None
 
-    total_denied :int 
+    email: Optional[str] = None
 
-    today_passed :int 
 
-    today_denied :int 
+class LogsResponse(BaseModel):
 
-    total_users :int 
+    logs: list[LogEntry]
 
-class SupervisorResponse (BaseModel ):
+    total_count: int
 
-    id :int 
+    limit: int
 
-    username :str 
+    offset: int
 
-    full_name :str 
 
+class LogStatsResponse(BaseModel):
+
+    total_passed: int
+
+    total_denied: int
+
+    today_passed: int
+
+    today_denied: int
+
+    total_users: int
+
+
+class SupervisorResponse(BaseModel):
+
+    id: int
+
+    username: str
+
+    full_name: str
